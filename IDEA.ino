@@ -1,8 +1,9 @@
 const int NONE = 0;
 const int FIST = 1;
-const int FIST_INDEX_OUT = 2;
 
 int state = NONE;
+
+float refAngle;
 
 const int numFlexes = 2;
 
@@ -11,7 +12,6 @@ const int MIDDLE_FINGER = 1;
 
 const int angleBufferLen = 20;
 float angle[2][angleBufferLen];
-float middleAngle[angleBufferLen];
 
 const int FLEX_PIN[] = {A11, A7};
 
@@ -54,6 +54,23 @@ void loop()
     Serial.println();
   }
 
+  float indexAngle = angle[INDEX_FINGER][0];
+  float middleAngle = angle[MIDDLE_FINGER][0];
+
+  if (middleAngle > 45) { /*flex resistor is in a certain threshold */
+    if (state != FIST) {
+      refAngle = indexAngle;
+      state = FIST;
+    }
+    if (indexAngle > refAngle) {
+      // dimmer
+    } else {
+      // brighter
+    }
+  } else {
+    state = NONE;
+  }
+
   Serial.println(degreesPerSecond(angle[MIDDLE_FINGER], 250));
   
   Serial.println();
@@ -64,6 +81,4 @@ float degreesPerSecond(float angle[angleBufferLen], int millisHistory) {
   int oldIndex = millisHistory/LOOP_DELAY;
   return (angle[0] - angle[oldIndex])/((oldIndex*LOOP_DELAY)/1000.0);
 }
-
-
 
