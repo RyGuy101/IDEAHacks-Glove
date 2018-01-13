@@ -30,11 +30,45 @@ void setup()
   for (int i = 0; i < numFlexes; i++) {
     pinMode(FLEX_PIN[i], INPUT);
   }
+  float tempAngle;
+  int x = 0;
 }
 
 void loop() 
 {
-  for (int i = 0; i < numFlexes; i++) {
+  int flexADC = analogRead(FLEX_PIN[1)];
+  float flexV = flexADC * VCC / 1023.0;
+  float flexR = ((R_DIV * VCC) / flexV) - R_DIV;
+  float angle = map(flexR, STRAIGHT_RESISTANCE[1], BEND_RESISTANCE[1],
+                     0, 90.0);
+  if(angle < 45) /*flex resistor is in a certain threshold */
+  {
+    delay(250);
+  }
+  else
+  {
+    int flexADC = analogRead(FLEX_PIN[0];
+    float flexV = flexADC * VCC / 1023.0;
+    float flexR = ((R_DIV * VCC) / flexV) - R_DIV;
+    float angle = map(flexR, STRAIGHT_RESISTANCE[0], BEND_RESISTANCE[0],
+                     0, 90.0);
+    if(x < 1)
+    {
+      tempAngle = angle;
+      x++;
+    }
+    if(angle > tempAngle)
+    {
+      // dimmer
+    }
+    else
+    {
+      // brighter
+    }
+    delay(250);
+  }
+
+  /* for (int i = 0; i < numFlexes; i++) {
     int flexADC = analogRead(FLEX_PIN[i]);
     float flexV = flexADC * VCC / 1023.0;
     float flexR = ((R_DIV * VCC) / flexV) - R_DIV;
@@ -52,7 +86,7 @@ void loop()
     Serial1.print("<dim100>");
 
     Serial.println();
-  }
+  }*/
 
   float indexAngle = angle[INDEX_FINGER][0];
   float middleAngle = angle[MIDDLE_FINGER][0];
@@ -81,4 +115,3 @@ float degreesPerSecond(float angle[angleBufferLen], int millisHistory) {
   int oldIndex = millisHistory/LOOP_DELAY;
   return (angle[0] - angle[oldIndex])/((oldIndex*LOOP_DELAY)/1000.0);
 }
-
