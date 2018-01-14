@@ -1,3 +1,9 @@
+#include <Wire.h>
+#include <Adafruit_Sensor.h>
+#include <Adafruit_LSM303_U.h>
+
+Adafruit_LSM303_Accel_Unified accel = Adafruit_LSM303_Accel_Unified(54321);
+
 const int NONE = 0;
 const int FIST_DELAY = 1;
 const int BRIGHTNESS_CONTROL = 2;
@@ -32,6 +38,8 @@ const int LOOP_DELAY = 50;
 const float FADE_AMOUNT = 1;
 byte brightness;
 
+sensors_event_t accelEvent;
+
 void setup() 
 {
   Serial.begin(9600);
@@ -39,10 +47,13 @@ void setup()
   for (int i = 0; i < numFlexes; i++) {
     pinMode(FLEX_PIN[i], INPUT);
   }
+  accel.begin();
 }
 
 void loop() 
 {
+  accel.getEvent(&accelEvent);
+  
   for (int i = 0; i < numFlexes; i++) 
   {
     int flexADC = analogRead(FLEX_PIN[i]);
@@ -65,27 +76,27 @@ void loop()
 
   float indexAngle = angle[INDEX_FINGER][0];
   float middleAngle = angle[MIDDLE_FINGER][0];
-  Serial.println(degreesPerSecond(angle[INDEX_FINGER], 100));
+//  Serial.println(degreesPerSecond(angle[MIDDLE_FINGER], 100));
 
   if (state == ONE_OPEN || state == ONE_CLOSE) {
-    if (toggleCounter < 20) {
+    if (toggleCounter < 7) {
       toggleCounter++;
     } else {
       state = NONE;
     }
   }
-  if (state != ONE_CLOSE && state != ONE_OPEN && degreesPerSecond(angle[INDEX_FINGER], 100) < -1250) {
+  if (state != ONE_CLOSE && state != ONE_OPEN && degreesPerSecond(angle[MIDDLE_FINGER], 100) < -1250) {
     toggleCounter = 0;
     state = ONE_OPEN;
-    Serial.print("ONE_OPEN");
+//    Serial.print("ONE_OPEN");
   } 
-  else if (state == ONE_OPEN && degreesPerSecond(angle[INDEX_FINGER], 100) > 1250) {
+  else if (state == ONE_OPEN && degreesPerSecond(angle[MIDDLE_FINGER], 100) > 1250) {
     toggleCounter = 0;
     state = ONE_CLOSE;
-    Serial.print("ONE_CLOSE");
+//    Serial.print("ONE_CLOSE");
   }
-  else if (state == ONE_CLOSE && degreesPerSecond(angle[INDEX_FINGER], 100) < -1250) {
-    Serial.print("toggle------------------------------------------------------------");
+  else if (state == ONE_CLOSE && degreesPerSecond(angle[MIDDLE_FINGER], 100) < -1250) {
+//    Serial.print("toggle------------------------------------------------------------");
     brightness = brightness > 0 ? 0 : 255;
     Serial1.write(brightness);
     state = NONE;
@@ -112,12 +123,16 @@ void loop()
           refBrightness = brightness;
           refAngle = indexAngle;
         }
-        Serial.println("brightness=" + String(brightness));
-        Serial.println("indexAngle=" + String(indexAngle));
+//        Serial.println("brightness=" + String(brightness));
+//        Serial.println("indexAngle=" + String(indexAngle));
         Serial1.write(brightness);
       }
     }
-  }
+
+    if (abs(sqrt(pow(accelEvent.acceleration.x, 2) + pow(accelEvent.acceleration.y, 2) + pow(accelEvent.acceleration.z, 2)) - 9.8) > 3) {
+      //change color
+    }
+  
 
 //  Serial.println(degreesPerSecond(angle[MIDDLE_FINGER], 250));
   
