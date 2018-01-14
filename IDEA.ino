@@ -23,6 +23,8 @@ const float BEND_RESISTANCE[] = {24000, 22000};
 
 const int LOOP_DELAY = 50;
 
+const float FADE_AMOUNT = 2.5;
+
 void setup() 
 {
   Serial.begin(9600);
@@ -30,20 +32,23 @@ void setup()
   for (int i = 0; i < numFlexes; i++) {
     pinMode(FLEX_PIN[i], INPUT);
   }
+  
+  float brightness = 0;
 }
 
 void loop() 
 {
-  for (int i = 0; i < numFlexes; i++) {
+  for (int i = 0; i < numFlexes; i++) 
+  {
     int flexADC = analogRead(FLEX_PIN[i]);
     float flexV = flexADC * VCC / 1023.0;
     float flexR = ((R_DIV * VCC) / flexV) - R_DIV;
     Serial.println("Resistance " + String(i+1) + ": " + String(flexR) + " ohms");
    
-    float currentAngle = map(flexR, STRAIGHT_RESISTANCE[i], BEND_RESISTANCE[i],
-                     0, 90.0);
+    float currentAngle = map(flexR, STRAIGHT_RESISTANCE[i], BEND_RESISTANCE[i], 0, 90.0);
                      
-    for (int j = angleBufferLen-1; j >= 1; j--) {
+    for (int j = angleBufferLen-1; j >= 1; j--) 
+  {
       angle[i][j] = angle[i][j-1];
     }
     angle[i][0] = currentAngle;
@@ -57,17 +62,20 @@ void loop()
   float indexAngle = angle[INDEX_FINGER][0];
   float middleAngle = angle[MIDDLE_FINGER][0];
 
-  if (middleAngle > 45) { /*flex resistor is in a certain threshold */
-    if (state != FIST) {
+  if (middleAngle > 45) 
+  { 
+    if (state != FIST) 
+  {
       refAngle = indexAngle;
       state = FIST;
     }
-    if (indexAngle > refAngle) {
-      // dimmer
-    } else {
-      // brighter
-    }
-  } else {
+  
+    float brightness = brightness + FADE_AMOUNT*(refAngle - indexAngle);
+    Serial1.write(int(brightness));
+  } 
+  
+  else 
+  {
     state = NONE;
   }
 
@@ -81,4 +89,3 @@ float degreesPerSecond(float angle[angleBufferLen], int millisHistory) {
   int oldIndex = millisHistory/LOOP_DELAY;
   return (angle[0] - angle[oldIndex])/((oldIndex*LOOP_DELAY)/1000.0);
 }
-
