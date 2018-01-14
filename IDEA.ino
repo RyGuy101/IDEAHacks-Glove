@@ -1,9 +1,15 @@
 const int NONE = 0;
-const int FIST = 1;
+const int FIST_DELAY = 1;
+const int BRIGHTNESS_CONTROL = 2;
+const int ONE_OPEN = 3;
+const int ONE_CLOSE = 4;
 
 int state = NONE;
 
 float refAngle;
+byte refBrightness;
+int delayCounter;
+int toggleCounter;
 
 const int numFlexes = 2;
 
@@ -23,8 +29,8 @@ const float BEND_RESISTANCE[] = {24000, 22000};
 
 const int LOOP_DELAY = 50;
 
-const float FADE_AMOUNT = 2.5;
-float brightness = 0;
+const float FADE_AMOUNT = 1;
+byte brightness;
 
 void setup() 
 {
@@ -42,7 +48,7 @@ void loop()
     int flexADC = analogRead(FLEX_PIN[i]);
     float flexV = flexADC * VCC / 1023.0;
     float flexR = ((R_DIV * VCC) / flexV) - R_DIV;
-    Serial.println("Resistance " + String(i+1) + ": " + String(flexR) + " ohms");
+//    Serial.println("Resistance " + String(i+1) + ": " + String(flexR) + " ohms");
    
     float currentAngle = map(flexR, STRAIGHT_RESISTANCE[i], BEND_RESISTANCE[i], 0, 90.0);
                      
@@ -52,35 +58,70 @@ void loop()
     }
     angle[i][0] = currentAngle;
     
-    Serial.println("Bend " + String(i+1) + ": " + String(currentAngle) + " degrees");
-    Serial1.print("<dim100>");
+//    Serial.println("Bend " + String(i+1) + ": " + String(currentAngle) + " degrees");
 
-    Serial.println();
+//    Serial.println();
   }
 
   float indexAngle = angle[INDEX_FINGER][0];
   float middleAngle = angle[MIDDLE_FINGER][0];
+  Serial.println(degreesPerSecond(angle[INDEX_FINGER], 100));
 
-  if (middleAngle > 45) 
-  { 
-    if (state != FIST) 
-  {
-      refAngle = indexAngle;
-      state = FIST;
+  if (state == ONE_OPEN || state == ONE_CLOSE) {
+    if (toggleCounter < 20) {
+      toggleCounter++;
+    } else {
+      state = NONE;
     }
-  
-    brightness = brightness + FADE_AMOUNT*(refAngle - indexAngle);
-    Serial1.write(int(brightness));
+  }
+  if (state != ONE_CLOSE && state != ONE_OPEN && degreesPerSecond(angle[INDEX_FINGER], 100) < -1250) {
+    toggleCounter = 0;
+    state = ONE_OPEN;
+    Serial.print("ONE_OPEN");
   } 
-  
-  else 
-  {
+  else if (state == ONE_OPEN && degreesPerSecond(angle[INDEX_FINGER], 100) > 1250) {
+    toggleCounter = 0;
+    state = ONE_CLOSE;
+    Serial.print("ONE_CLOSE");
+  }
+  else if (state == ONE_CLOSE && degreesPerSecond(angle[INDEX_FINGER], 100) < -1250) {
+    Serial.print("toggle------------------------------------------------------------");
+    brightness = brightness > 0 ? 0 : 255;
+    Serial1.write(brightness);
     state = NONE;
   }
+  else if (state != ONE_CLOSE && state != ONE_OPEN && middleAngle > 90) { 
+    if (state == NONE) {
+      delayCounter = 0;
+      state = FIST_DELAY;
+    }
+    if (state == FIST_DELAY) 
+    {
+      if (delayCounter < 0) {
+         delayCounter++;
+      } else if (abs(degreesPerSecond(angle[MIDDLE_FINGER], 50)) < 135) {
+        refAngle = indexAngle;
+        refBrightness = brightness;
+        state = BRIGHTNESS_CONTROL;
+      }
+    }
+    if (state == BRIGHTNESS_CONTROL) {
+      if (abs(degreesPerSecond(angle[MIDDLE_FINGER], 50)) < 135) {
+        brightness = constrain(refBrightness - FADE_AMOUNT*(indexAngle - refAngle), 0, 255);
+        if (brightness == 255) {
+          refBrightness = brightness;
+          refAngle = indexAngle;
+        }
+        Serial.println("brightness=" + String(brightness));
+        Serial.println("indexAngle=" + String(indexAngle));
+        Serial1.write(brightness);
+      }
+    }
+  }
 
-  Serial.println(degreesPerSecond(angle[MIDDLE_FINGER], 250));
+//  Serial.println(degreesPerSecond(angle[MIDDLE_FINGER], 250));
   
-  Serial.println();
+//  Serial.println();
   delay(LOOP_DELAY);
 }
 
