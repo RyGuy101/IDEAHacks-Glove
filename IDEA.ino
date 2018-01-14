@@ -97,7 +97,7 @@ void loop()
   }
   else if (state == ONE_CLOSE && degreesPerSecond(angle[MIDDLE_FINGER], 100) < -1250) {
 //    Serial.print("toggle------------------------------------------------------------");
-    brightness = brightness > 0 ? 0 : 255;
+    brightness = brightness > 0 ? 0 : 127;
     Serial1.write(brightness);
     state = NONE;
   }
@@ -118,24 +118,23 @@ void loop()
     }
     if (state == BRIGHTNESS_CONTROL) {
       if (abs(degreesPerSecond(angle[MIDDLE_FINGER], 50)) < 135) {
-        brightness = constrain(refBrightness - FADE_AMOUNT*(indexAngle - refAngle), 0, 255);
-        if (brightness == 255) {
+        brightness = constrain(refBrightness - FADE_AMOUNT*(indexAngle - refAngle), 0, 127);
+        if (brightness == 127) {
           refBrightness = brightness;
           refAngle = indexAngle;
         }
-//        Serial.println("brightness=" + String(brightness));
+        Serial.println("brightness=" + String(brightness));
 //        Serial.println("indexAngle=" + String(indexAngle));
         Serial1.write(brightness);
       }
     }
-
-    if (abs(sqrt(pow(accelEvent.acceleration.x, 2) + pow(accelEvent.acceleration.y, 2) + pow(accelEvent.acceleration.z, 2)) - 9.8) > 3) {
-      //change color
-    }
+  }
   
-
-//  Serial.println(degreesPerSecond(angle[MIDDLE_FINGER], 250));
-  
+  if (middleAngle < 90 && indexAngle > 90 && abs(sqrt(pow(accelEvent.acceleration.x, 2) + pow(accelEvent.acceleration.y, 2) + pow(accelEvent.acceleration.z, 2)) - 9.8) > 2) {
+    Serial.println("color");
+    Serial1.write(128);
+  }
+    
 //  Serial.println();
   delay(LOOP_DELAY);
 }
