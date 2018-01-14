@@ -1,0 +1,69 @@
+int red = 11;
+int blue = 12;
+int green = 10;
+int ledpin = 13;
+
+int state = 0;
+int brightness = 0;
+
+void setup()
+{
+  Serial.begin(9600);
+  Serial1.begin(9600);
+  pinMode(red, OUTPUT);
+  pinMode(blue, OUTPUT);
+  pinMode(green, OUTPUT);
+  pinMode(ledpin, OUTPUT);
+
+  analogWrite(red, 0);
+  analogWrite(blue , 0);
+  analogWrite(green, 0);
+}
+
+void loop()
+{
+  if(Serial1.available())
+  {
+    int output = Serial1.read();
+     
+    if (output > 127)
+    {
+      if(state != 2)
+      { 
+        state++;
+      }
+
+      else
+      {
+        state = 0;
+      }
+    }
+
+    else
+    {
+      brightness = output*2;
+      analogWrite(ledpin, output*2);
+    }
+
+    switch(state){
+    case 0:
+      analogWrite(red, 0);
+      analogWrite(blue , 0);
+      analogWrite(green, brightness);
+      break;
+    case 1:
+      analogWrite(red, brightness);
+      analogWrite(blue , 0);
+      analogWrite(green, 0);
+      break;
+    case 2:
+      analogWrite(red, 0);
+      analogWrite(blue , brightness);
+      analogWrite(green, 0);
+      break;
+    }
+    
+        Serial.println("Output: " + String(output));
+    Serial.println("Brightness: " + String(brightness));
+  }
+}
