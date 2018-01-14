@@ -24,6 +24,7 @@ const float BEND_RESISTANCE[] = {24000, 22000};
 const int LOOP_DELAY = 50;
 
 const float FADE_AMOUNT = 2.5;
+float brightness = 0;
 
 void setup() 
 {
@@ -32,8 +33,6 @@ void setup()
   for (int i = 0; i < numFlexes; i++) {
     pinMode(FLEX_PIN[i], INPUT);
   }
-  
-  float brightness = 0;
 }
 
 void loop() 
@@ -70,7 +69,7 @@ void loop()
       state = FIST;
     }
   
-    float brightness = brightness + FADE_AMOUNT*(refAngle - indexAngle);
+    brightness = brightness + FADE_AMOUNT*(refAngle - indexAngle);
     Serial1.write(int(brightness));
   } 
   
